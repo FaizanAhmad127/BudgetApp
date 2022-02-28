@@ -1,10 +1,17 @@
+import 'package:budget_app/sheets/api/user_sheets_api.dart';
 import 'package:gsheets/gsheets.dart';
 
 class TotalFields{
 
 
-   final Worksheet? totalWorksheet;
-  TotalFields({required this.totalWorksheet});
+   late final Worksheet? totalWorksheet;
+   Future<TotalFields> init()async
+   {
+     return await UserSheetApi.init().then((value) {
+       totalWorksheet=value[0];
+       return this;
+     });
+   }
 
   Future<List<Map<String, dynamic>>> getRows()async
   {
@@ -23,11 +30,12 @@ class TotalFields{
       return listOfTotals;
     }
     catch(e){
-      print("error $e");
+      print("error at GetRows totals.dart$e");
       return [];
     }
-
-
+  }
+  Future deleteRow(int rowNo) async{
+     await totalWorksheet!.deleteRow(rowNo);
   }
 
 }

@@ -1,11 +1,15 @@
+
 import 'package:budget_app/Models/details.dart';
+import 'package:budget_app/Screens/details_screen.dart';
+import 'package:budget_app/Screens/total_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:gsheets/gsheets.dart';
+import 'package:page_transition/page_transition.dart';
 
 class TransactionScreen extends StatefulWidget {
-  final List<Worksheet?> workSheetList;
+
   final description;
-  TransactionScreen({required this.workSheetList,required this.description});
+  TransactionScreen({required this.description});
 
   @override
   _TransactionScreenState createState() => _TransactionScreenState();
@@ -17,11 +21,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
   TextEditingController valueController=TextEditingController();
   String dropdownvalue="d";
   bool isLoaded=false;
+  bool isLoading=false;
+  late Future _myNetworkFuture;
 
   @override
   void initState() {
     super.initState();
-    detailsField=DetailsField(detailWorksheet: widget.workSheetList[1], description: widget.description);
+    detailsField=DetailsField( description: widget.description);
+    _myNetworkFuture=detailsField.init().then((value) {
+      return detailsField.getColumnNames();});
 
   }
   bool validate({required String des, required String val})
@@ -41,7 +49,20 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     double h=MediaQuery.of(context).size.height;
     double w=MediaQuery.of(context).size.width;
-
+    final snackBar = SnackBar(
+      content: const Text('Please fill the text field'),
+      action: SnackBarAction(
+        label: 'O.K',
+        onPressed: () {
+          ScaffoldMessenger.of(context).clearSnackBars();
+        },
+      ),
+    );
+    if(_myNetworkFuture==null)
+      {
+        _myNetworkFuture=detailsField.init().then((value) {
+          return detailsField.getColumnNames();});
+      }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
@@ -59,6 +80,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
         child: Padding(
           padding: EdgeInsets.all(20),
           child: FutureBuilder(
+            future: _myNetworkFuture,
             builder: (context,AsyncSnapshot snapshot)
             {
               if(snapshot.hasData)
@@ -81,6 +103,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
                 return Column(
                   children: [
+                    isLoading==true?Container(
+                        height: h*0.03,
+                        child: Text("Loading..")):Container(height: h*0.03,),
+                    SizedBox(height: h*0.04,),
                     Align(
                       alignment: Alignment.center,
                       child: Container(
@@ -139,7 +165,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10.0),
                           borderSide: BorderSide(
-                            color: Colors.green,
+                            color: Colors.blueGrey,
                             width: 2.0,
                           ),
                         ),
@@ -163,7 +189,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10.0),
                           borderSide: BorderSide(
-                            color: Colors.red,
+                            color: Colors.blueGrey,
                             width: 2.0,
                           ),
                         ),
@@ -172,52 +198,130 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     SizedBox(
                       height: h*0.07,
                     ),
-                    Container(
-                        width: w*0.35,
-                        height: h*0.075,
-                        child: ElevatedButton(
-                          onPressed: ()
-                          {
-                            String description=descriptionController.text;
-                            String value=valueController.text;
-                            if(validate(des: description,
-                                val: value)==true)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                            width: w*0.35,
+                            height: h*0.075,
+                            child: ElevatedButton(
+                              onPressed: ()
                               {
-                                detailsField.addRow(des: description,
-                                    val: value,descript: dropdownvalue)
-                                    .then((value) {
-                                  Navigator.pop(context);
-                                });
-                              }
-                          },
-                          style: ButtonStyle(
-                              elevation: MaterialStateProperty.all(20),
-                              backgroundColor: MaterialStateProperty.all(Colors.black),
-                              shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5)
-                              ),)
-                          ),
-                          child: Text(
-                            "Submit",
-                            style: TextStyle(
-                              letterSpacing: 1.5,
-                              fontSize: 15,
-                            ),
-                          ),
-                        )
-                    ),
+                                if(widget.description=="")
+                                  {
+                                    Navigator.pushReplacement(context, PageTransition(
+                                        duration: Duration(milliseconds: 500),
+                                        type: PageTransitionType.leftToRightWithFade, child: TotalScreen(
+
+                                    )));
+                                  }
+                                else
+                                  {
+                                    Navigator.pushReplacement(context, PageTransition(
+                                        duration: Duration(milliseconds: 500),
+                                        type: PageTransitionType.leftToRightWithFade, child: DetailsScreen(
+
+                                      description: widget.description,
+                                    )));
+                                  }
+                              },
+                              style: ButtonStyle(
+                                  elevation: MaterialStateProperty.all(20),
+                                  backgroundColor: MaterialStateProperty.all(Colors.black),
+                                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5)
+                                  ),)
+                              ),
+                              child: Text(
+                                "Back",
+                                style: TextStyle(
+                                  letterSpacing: 1.5,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            )
+                        ),
+                        Container(
+                            width: w*0.35,
+                            height: h*0.075,
+                            child: ElevatedButton(
+                              onPressed: ()async
+                              {
+
+                                String description=descriptionController.text;
+                                String value=valueController.text;
+                                if(validate(des: description,
+                                    val: value)==true)
+                                {
+                                  if(isLoading==false)
+                                  {
+                                    setState(() {
+                                      isLoading=true;
+                                    });
+
+                                    await detailsField.addRow(des: description,
+                                        val: value,descript: dropdownvalue)
+                                        .then((value) {
+                                      Future.delayed(const Duration(seconds: 2)).then((value) {
+                                        if(widget.description=="")
+                                        {
+                                          Navigator.pushReplacement(context, PageTransition(
+                                              duration: const Duration(milliseconds: 500),
+                                              type: PageTransitionType.leftToRightWithFade, child: const TotalScreen(
+
+                                          )));
+                                        }
+                                        else
+                                        {
+                                          Navigator.pushReplacement(context, PageTransition(
+                                              duration: const Duration(milliseconds: 500),
+                                              type: PageTransitionType.leftToRightWithFade, child: DetailsScreen(
+
+                                            description: widget.description,
+                                          )));
+                                        }
+                                      });
+
+                                    });
+                                  }
+
+                                }
+                                else
+                                  {
+                                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                  }
+                              },
+                              style: ButtonStyle(
+                                  elevation: MaterialStateProperty.all(20),
+                                  backgroundColor: MaterialStateProperty.all(Colors.black),
+                                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5)
+                                  ),)
+                              ),
+                              child: Text(
+                                "Submit",
+                                style: TextStyle(
+                                  letterSpacing: 1.5,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            )
+                        ),
+                      ],
+                    )
+
                   ],
                 );
               }
               else
               {
                 return Center(
-                  child: Text("Loading"),
+                  child: Text("Loading..."),
                 );
               }
 
             },
-            future: detailsField.getColumnNames(),
+
           ),
 
         ),
