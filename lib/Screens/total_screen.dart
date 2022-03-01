@@ -22,6 +22,9 @@ class _TotalScreenState extends State<TotalScreen> {
   late TotalFields totalFields;
   late Future? _myNetworkFuture;
   bool isLoading=false;
+  bool popUp=false;
+  String descriptionR="";
+  int rowNoR=1;
 
   Widget cardWidget({required double h,required double w,required String description, required double value,required int rowNo})
   {
@@ -107,28 +110,11 @@ class _TotalScreenState extends State<TotalScreen> {
                        child: GestureDetector(
                          onTap: ()async
                          {
-                           if(isLoading==false)
-                             {
-                               setState(() {
-                                 isLoading=true;
-                               });
-                               await totalFields.deleteRow(rowNo).then((value) {
-                                 DetailsField(description: "").init().then((detailsField) {
-                                   //deleting the description col
-                                   detailsField.deleteColumn(colName: description).then((value){
-                                     //deleting the dollars col
-                                     detailsField.deleteColumn(colName: description+"_V").then((value) {
-                                       Navigator.pushReplacement(context, PageTransition(
-                                           duration: Duration(milliseconds: 500),
-                                           type: PageTransitionType.leftToRightWithFade, child: TotalScreen(
-                                       )));
-                                     });
-                                   });
-                                 });
-
-                               });
-
-                             }
+                          setState(() {
+                            popUp=true;
+                            descriptionR=description;
+                            rowNoR=rowNo;
+                          });
 
                          },
                          child: FittedBox(
@@ -290,6 +276,65 @@ class _TotalScreenState extends State<TotalScreen> {
                       ),
                     ),
                    ),
+                  popUp==true?
+                  Positioned(
+
+                      child: Container(
+                        color: Colors.white54,
+                        child: Center(
+                          child: Container(
+                            width: w*0.9,
+                            height: h*0.5,
+                            color:Colors.white,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Are you sure?",style: TextStyle(
+                                    fontSize: 18
+                                ),),
+                                SizedBox(height: h*0.05,),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+
+                                    TextButton(onPressed: (){
+                                      setState(() {
+                                        popUp=false;
+                                      });
+                                    }, child: Text("NO")),
+                                    TextButton(
+                                        onPressed: ()async
+                                        {
+                                          if(isLoading==false)
+                                          {
+                                            setState(() {
+                                              isLoading=true;
+                                            });
+                                            await totalFields.deleteRow(rowNoR).then((value) {
+                                              DetailsField(description: "").init().then((detailsField) {
+                                                //deleting the description col
+                                                detailsField.deleteColumn(colName: descriptionR).then((value){
+                                                  //deleting the dollars col
+                                                  detailsField.deleteColumn(colName: descriptionR+"_V").then((value) {
+                                                    Navigator.pushReplacement(context, PageTransition(
+                                                        duration: Duration(milliseconds: 500),
+                                                        type: PageTransitionType.leftToRightWithFade, child: TotalScreen(
+                                                    )));
+                                                  });
+                                                });
+                                              });
+
+                                            });
+
+                                          }
+                                        }, child: Text("YES"))
+                                  ],
+                                )
+                              ],
+
+                            ),
+                          ),
+                        ),)):Container(),
                   isLoading==true?
                   Positioned(
                       child: Opacity(

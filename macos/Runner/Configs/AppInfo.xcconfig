@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = budget_app
+PRODUCT_NAME = Budget App;
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.budgetapp.us.budgetApp
+PRODUCT_BUNDLE_IDENTIFIER = com.markjc.budgetapp;
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2022 com.budgetapp.us. All rights reserved.

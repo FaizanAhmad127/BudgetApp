@@ -19,7 +19,7 @@ class DetailsScreen extends StatefulWidget {
 class _DetailsScreenState extends State<DetailsScreen> {
   late DetailsField detailFields;
   late Future _myNetworkFuture;
-  Widget cardWidget({required double h,required double w,required String description, required String value})
+  Widget cardWidget({required double h,required double w,required String description, required String value,required int rowNo})
   {
     return Padding(
       padding: EdgeInsets.only(bottom: 10),
@@ -151,7 +151,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       return l.isNotEmpty? ListView.builder(
                           itemCount: l.length,
                           itemBuilder: (context,index){
-                            return cardWidget(h: h,w: w,description: l[index]["description"], value: l[index]["total"]);
+                            return cardWidget(h: h,w: w,description: l[index]["description"],
+                                value: l[index]["total"],rowNo:l[index]["rowNo"]);
                           }):
                       const Center(
                         child: Text(
